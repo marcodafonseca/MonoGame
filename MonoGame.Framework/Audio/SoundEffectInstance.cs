@@ -140,8 +140,17 @@ namespace Microsoft.Xna.Framework.Audio
         /// <remarks>Throws an exception if more sounds are playing than the platform allows.</remarks>
         public virtual void Play()
         {
+            if (_isDisposed)
+                throw new ObjectDisposedException("SoundEffectInstance");
+
             if (State == SoundState.Playing)
                 return;
+
+            if (State == SoundState.Paused)
+            {
+                Resume();
+                return;
+            }
 
             // We don't need to check if we're at the instance play limit
             // if we're resuming from a paused state.
@@ -149,8 +158,6 @@ namespace Microsoft.Xna.Framework.Audio
             {
                 if (!SoundEffectInstancePool.SoundsAvailable)
                     throw new InstancePlayLimitException();
-
-                SoundEffectInstancePool.Remove(this);
             }
             
             // For non-XAct sounds we need to be sure the latest
@@ -159,6 +166,7 @@ namespace Microsoft.Xna.Framework.Audio
                 PlatformSetVolume(_volume * SoundEffect.MasterVolume);
 
             PlatformPlay();
+            SoundEffectInstancePool.Remove(this);
         }
 
         /// <summary>Resumes playback for a SoundEffectInstance.</summary>
